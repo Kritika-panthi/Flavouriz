@@ -1,36 +1,49 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registration page</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/registrationpage.css">
+    <title>Registration page</title>  
+     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/registrationpage.css">
+      
 </head>
 <body>
     <div class="box">
-        <form action="">
+        <form action="${pageContext.request.contextPath}/register" method="post" enctype="multipart/form-data">
             <h2>Register</h2>
+            
             <div class="Input-box">
-                <input type="Username" placeholder="Username" required>
+                <input type="text" name="username" placeholder="Username" value="${username != null ? username : ''}" required>
             </div>
             <div class="Input-box">
-                <input type="email" placeholder="E-mail" required>
+                <input type="email" name="email" placeholder="E-mail" value="${email != null ? email : ''}" required>
             </div>
             <div class="Input-box">
-                <input type="password" placeholder="Password" required>
+                <input type="password" name="password" placeholder="Password" required>
             </div>
             <div class="Input-box">
-                <input type="confirmpassword" placeholder="Confirm Password" required>
-            </div> 
-                
-                <button type="submit" class="register-button">Register</button>
+                <input type="password" name="retypePassword" placeholder="Confirm Password" required>
+            </div>
+            <div class="Input-box">
+                <select name="role">
+                    <option value="user" ${role == 'user' ? 'selected' : ''}>User</option>
+                    <option value="admin" ${role == 'admin' ? 'selected' : ''}>Admin</option>
+                </select>
+            </div>
+            
+            <!-- Display error message if any -->
+            <% if(request.getAttribute("errorMessage") != null) { %>
+                <div class="error-message">
+                    <%= request.getAttribute("errorMessage") %>
+                </div>
+            <% } %>
+            
+            <button type="submit" class="register-button">Register</button>
             <div class="signin">
-                <p>Already have an account? 
-                <a href="loginpage.jsp">Sign in</a></p>
+                <p>Already have an account? <a href="${pageContext.request.contextPath}/login">Sign in</a></p>
             </div>
-        </form>       
+        </form>
     </div>
 </body>
 </html>
