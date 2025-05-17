@@ -38,7 +38,6 @@
             <h3>Quick Actions</h3>
             <div class="action-buttons">
                 <button>Edit Profile</button>
-                <button>View Favorites</button>
                 <button class="danger">Delete Account</button>
             </div>
         </section>
