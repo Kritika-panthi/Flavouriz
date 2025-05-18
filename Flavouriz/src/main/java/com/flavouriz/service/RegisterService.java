@@ -1,64 +1,99 @@
-package com.flavouriz.service;
+package com.flavourizz.service;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import com.flavouriz.config.DbConfig;
-import com.flavouriz.model.UserModel;
-import com.flavouriz.util.PasswordUtil;
+import com.flavourizz.config.DbConfig;
+import com.flavourizz.model.UserModel;
 
-/**
- * RegisterService handles the registration of new users for the Flavouriz platform.
- */
 public class RegisterService {
 
     private Connection dbConn;
+    private boolean isConnectionError = false;
 
-    /**
-     * Constructor initializes the database connection.
-     */
     public RegisterService() {
         try {
-            this.dbConn = DbConfig.getDbConnection(); 
-        } catch (SQLException | ClassNotFoundException ex) {
-            System.err.println("Database connection error: " + ex.getMessage());
-            ex.printStackTrace();
+            dbConn = DbConfig.getDbConnection();
+        } catch (SQLException | ClassNotFoundException e) {
+            e.printStackTrace();
+            isConnectionError = true;
         }
     }
 
-    /**
-     * Registers a new user in the database.
-     *
-     * @param userModel the user details to be registered
-     * @return Boolean indicating the success of the operation
-     */
-    public Boolean registerUser(UserModel userModel) {
-        if (dbConn == null) {
-            System.err.println("Database connection is not available.");
-            return false;  // Return false instead of null
+    public boolean registerUser(UserModel user) {
+        if (isConnectionError) {
+            System.out.println("DB connection error during registration.");
+            return false;
         }
 
-        String insertQuery = "INSERT INTO users (name, email, username, password, role, profile_pic) "
-                           + "VALUES (?, ?, ?, ?, ?, ?)";
-
-        try (PreparedStatement pstmt = dbConn.prepareStatement(insertQuery)) {
-            // Ensure PasswordUtil handles the salt or update accordingly
-            String encryptedPassword = PasswordUtil.encrypt(userModel.getPassword(), "salt123");  // Using salt
-
-            pstmt.setString(1, userModel.getName());
-            pstmt.setString(2, userModel.getEmail());
-            pstmt.setString(3, userModel.getUsername());
-            pstmt.setString(4, encryptedPassword);
-            pstmt.setString(5, userModel.getRole());
-            pstmt.setString(6, userModel.getProfilePic());
-
-            // If the insert is successful, return true
-            return pstmt.executeUpdate() > 0;
+        // Check if email exists
+        String checkEmailQuery = "SELECT email FROM users WHERE LOWER(email) = LOWER(?)";
+        try (PreparedStatement checkStmt = dbConn.prepareStatement(checkEmailQuery)) {
+            checkStmt.setString(1, user.getEmail().trim().toLowerCase());
+            try (ResultSet rs = checkStmt.executeQuery()) {
+                if (rs.next()) {
+                    System.out.println("Email already exists: " + user.getEmail());
+                    return false;
+                }
+            }
         } catch (SQLException e) {
-            System.err.println("Error during user registration: " + e.getMessage());
             e.printStackTrace();
-            return false;  // Return false on failure
+            return false;
+        }
+
+        // Insert user
+        String insertQuery = "INSERT INTO users (Username, Email, Password, Role_ID) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement insertStmt = dbConn.prepareStatement(insertQuery)) {
+            insertStmt.setString(1, user.getUsername().trim());
+            insertStmt.setString(2, user.getEmail().trim());
+            insertStmt.setString(3, user.getPassword());
+            insertStmt.setInt(4, user.getRoleId());
+
+            int rowsInserted = insertStmt.executeUpdate();
+            return rowsInserted > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // --- New method: getUserIdByEmail ---
+    public int getUserIdByEmail(String email) {
+        if (isConnectionError) return -1;
+
+        int userId = -1;
+        String sql = "SELECT User_ID FROM users WHERE LOWER(email) = LOWER(?)";
+        try (PreparedStatement ps = dbConn.prepareStatement(sql)) {
+            ps.setString(1, email.trim().toLowerCase());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    userId = rs.getInt("User_ID");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return userId;
+    }
+
+    // --- New method: registerChef ---
+    public boolean registerChef(int userId, String bio, String profilePicFileName, String socialLinks) {
+        if (isConnectionError) return false;
+
+        String sql = "INSERT INTO chef (User_ID, Chef_Bio, Chef_Profile_Pic, Social_Links) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement ps = dbConn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setString(2, bio);
+            ps.setString(3, profilePicFileName);
+            ps.setString(4, socialLinks);
+
+            int rows = ps.executeUpdate();
+            return rows > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
         }
     }
 }

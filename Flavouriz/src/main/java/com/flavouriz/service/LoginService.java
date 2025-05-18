@@ -3,85 +3,36 @@ package com.flavourizz.service;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 
 import com.flavourizz.config.DbConfig;
 import com.flavourizz.model.UserModel;
-import com.flavourizz.util.PasswordUtil;
 
-/**
- * Service class for handling login operations for Flavouriz. Connects to the
- * database, verifies user credentials, and returns login status.
- */
 public class LoginService {
 
-    private Connection dbConn;
-    private boolean isConnectionError = false;
+    public UserModel getUserByEmail(String email) {
+        UserModel user = null;
+        String sql = "SELECT User_ID, Username, email, Password, Role_ID FROM users WHERE email = ?";
 
-    /**
-     * Constructor initializes the database connection. Sets the connection error
-     * flag if the connection fails.
-     */
-    public LoginService() {
-        try {
-            dbConn = DbConfig.getDbConnection();
-        } catch (SQLException | ClassNotFoundException ex) {
-            ex.printStackTrace();
-            isConnectionError = true;
-        }
-    }
+        try (Connection conn = DbConfig.getDbConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-    /**
-     * Validates the user credentials against the database records.
-     *
-     * @param userModel the UserModel object containing user credentials
-     * @return true if the user credentials are valid, false otherwise; null if a
-     *         connection error occurs
-     */
-    public Boolean loginUser(UserModel userModel) {
-        if (isConnectionError) {
-            System.out.println("Connection Error!");
-            return null;
-        }
+            ps.setString(1, email);
+            ResultSet rs = ps.executeQuery();
 
-        String query = "SELECT username, password, role FROM users WHERE username = ?";
-        try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
-            stmt.setLong(1, userModel.getUserId());
-            ResultSet result = stmt.executeQuery();
+            if (rs.next()) {
+                user = new UserModel();
 
-            if (result.next()) {
-                return validatePassword(result, userModel);
+                user.setUserId(rs.getInt("User_ID"));       // updated column name
+                user.setUsername(rs.getString("Username")); // updated column name
+                user.setEmail(rs.getString("email"));
+                user.setPassword(rs.getString("Password")); // updated column name
+                user.setRoleId(rs.getInt("Role_ID"));       // updated column name
             }
-        } catch (SQLException e) {
+
+        } catch (Exception e) {
             e.printStackTrace();
-            return null;
         }
 
-        return false;
-    }
-
-    /**
-     * Validates the password retrieved from the database.
-     *
-     * @param result     the ResultSet containing the username, password, and role
-     *                   from the database
-     * @param userModel  the UserModel object containing user credentials
-     * @return true if the passwords match, false otherwise
-     * @throws SQLException if a database access error occurs
-     */
-    @SuppressWarnings("unlikely-arg-type")
-	private boolean validatePassword(ResultSet result, UserModel userModel) throws SQLException {
-        String dbUsername = result.getString("username");
-        String dbPassword = result.getString("password");
-        String dbRole = result.getString("role");
-
-        // Validate username and decrypted password
-        if (dbUsername.equals(userModel.getUserId())
-                && PasswordUtil.decrypt(dbPassword, dbUsername).equals(userModel.getPassword())) {
-            // Set the role for role-based access control
-            userModel.setRole(dbRole);
-            return true;
-        }
-        return false;
+        return user;
     }
 }
