@@ -9,31 +9,39 @@
  <link rel="stylesheet" href="${pageContext.request.contextPath}/css/loginpage.css">
 </head>
 <body>
-	<div class="food-img">
-	<img src="${pageContext.request.contextPath}/images/food7.png" alt="food8 Logo">
-	</div>
- <div class="container-login">
- <form action="">
- <h2>Get Recipe with Flavouriz</h2>
- <div class="form-box">
- <input type="email" placeholder="E-mail" required>
- </div>
- <div class="form-box">
- <input type="password" placeholder="Password" required>
- </div>
- <div class="forgot">
- <label><input type="checkbox">Remember me</label>
- <a href="#">Forgot Password?</a>
- </div> 
- 
- <button type="submit" class="signin-button">Sign In</button>
- 
- <div class="register">
- <p>Don't have an account? 
- <a href="registrationpage.html">Register</a></p>
- </div>
- </form> 
- </div>
- 
+    <div class="food-img">
+        <img src="${pageContext.request.contextPath}/images/food7.png" alt="food8 Logo">
+    </div>
+    <div class="container-login">
+        <form action="${pageContext.request.contextPath}/login" method="post">
+            <h2>Get Recipe with Flavouriz</h2>
+
+            <div class="form-box">
+                <input type="email" name="email" placeholder="E-mail" required
+                       value="${param.email != null ? param.email : ''}">
+            </div>
+
+            <div class="form-box">
+                <input type="password" name="password" placeholder="Password" required>
+            </div>
+
+            <div class="forgot">
+                <label><input type="checkbox" name="rememberMe">Remember me</label>
+                <a href="#">Forgot Password?</a>
+            </div> 
+
+            <!-- Show error message if exists -->
+            <div style="color: red; margin-bottom: 10px;">
+                ${requestScope.error != null ? requestScope.error : ''}
+            </div>
+
+            <button type="submit" class="signin-button">Sign In</button>
+
+            <div class="register">
+                <p>Don't have an account? 
+                <a href="${pageContext.request.contextPath}/registrationpage.jsp">Register</a></p>
+            </div>
+        </form> 
+    </div>
 </body>
 </html>

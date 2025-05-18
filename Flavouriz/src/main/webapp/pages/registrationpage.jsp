@@ -5,8 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registration page</title>  
-     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/registrationpage.css">
-      
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/registrationpage.css">
 </head>
 <body>
     <div class="box">
@@ -25,14 +24,6 @@
             <div class="Input-box">
                 <input type="password" name="retypePassword" placeholder="Confirm Password" required>
             </div>
-            <div class="Input-box">
-                <select name="role">
-                    <option value="user" ${role == 'user' ? 'selected' : ''}>User</option>
-                    <option value="admin" ${role == 'admin' ? 'selected' : ''}>Admin</option>
-                </select>
-            </div>
-            
-            <!-- Display error message if any -->
             <% if(request.getAttribute("errorMessage") != null) { %>
                 <div class="error-message">
                     <%= request.getAttribute("errorMessage") %>
@@ -44,6 +35,9 @@
                 <p>Already have an account? <a href="${pageContext.request.contextPath}/login">Sign in</a></p>
             </div>
         </form>
+        <p>Want to register as a Chef instead? 
+   <a href="${pageContext.request.contextPath}/chefregister">Click here</a>
+</p>
     </div>
 </body>
 </html>
