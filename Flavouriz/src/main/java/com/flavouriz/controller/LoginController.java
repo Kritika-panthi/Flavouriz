@@ -5,6 +5,7 @@ import java.io.IOException;
 import com.flavourizz.model.UserModel;
 import com.flavourizz.service.LoginService;
 import com.flavourizz.util.CookieUtil;
+import com.flavourizz.util.PasswordUtil;
 import com.flavourizz.util.SessionUtil;
 
 import jakarta.servlet.ServletException;
@@ -13,86 +14,74 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-/**
-* LoginController is responsible for handling login requests. It interacts with
-* the LoginService to authenticate users.
-*/
 @WebServlet(asyncSupported = true, urlPatterns = { "/login" })
 public class LoginController extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     private final LoginService loginService;
 
-    /**
-     * Constructor initializes the LoginService.
-     */
     public LoginController() {
         this.loginService = new LoginService();
     }
 
-    /**
-     * Handles GET requests to the login page.
-     *
-     * @param request HttpServletRequest object
-     * @param response HttpServletResponse object
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
+    private String getRoleName(int roleId) {
+        switch (roleId) {
+            case 1: return "user";
+            case 2: return "admin";
+            case 3: return "chef";
+            default: return "user";
+        }
+    }
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.getRequestDispatcher("/WEB-INF/pages/loginpage.jsp").forward(request, response);
     }
 
-    /**
-     * Handles POST requests for user login.
-     *
-     * @param request HttpServletRequest object
-     * @param response HttpServletResponse object
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String username = req.getParameter("username");
+        String email = req.getParameter("email");
         String password = req.getParameter("password");
 
-        UserModel userModel = new UserModel(0, username, password, password, password);
-        Boolean loginStatus = loginService.loginUser(userModel);  // Fixed variable name here
+        System.out.println("Login attempt for email: " + email);
 
-        if (loginStatus != null && loginStatus) {
-            SessionUtil.setAttribute(req, "username", username);
-            if (username.equals("admin")) {
-                CookieUtil.addCookie(resp, "role", "admin", 5 * 30);
-                resp.sendRedirect(req.getContextPath() + "/dashboard"); // Redirect to /dashboard
-            } else {
-                CookieUtil.addCookie(resp, "role", "user", 5 * 30);  // Changed to match filter expectation
-                resp.sendRedirect(req.getContextPath() + "/home"); // Redirect to /home
+        UserModel userModel = loginService.getUserByEmail(email);
+
+        if (userModel == null) {
+            System.out.println("User not found for email: " + email);
+        } else {
+            System.out.println("User found: " + userModel.getUsername());
+            System.out.println("Stored password hash from DB: " + userModel.getPassword());
+
+            boolean verified = PasswordUtil.verifyPassword(password, userModel.getPassword());
+            System.out.println("Password verification result: " + verified);
+
+            if (verified) {
+                SessionUtil.setAttribute(req, "username", userModel.getUsername());
+                String role = getRoleName(userModel.getRoleId());
+                SessionUtil.setAttribute(req, "role", role);
+
+                CookieUtil.addCookie(resp, "role", role, 1800);
+
+                switch (role) {
+                    case "admin":
+                        resp.sendRedirect(req.getContextPath() + "/dashboard");
+                        break;
+                    case "chef":
+                        resp.sendRedirect(req.getContextPath() + "/chef/dashboard");
+                        break;
+                    case "user":
+                    default:
+                        resp.sendRedirect(req.getContextPath() + "/home");
+                        break;
+                }
+                return;  // exit here since login succeeded
             }
-        } else {
-            handleLoginFailure(req, resp, loginStatus);
         }
-    }
 
-    /**
-     * Handles login failures by setting attributes and forwarding to the login
-     * page.
-     *
-     * @param req HttpServletRequest object
-     * @param resp HttpServletResponse object
-     * @param loginStatus Boolean indicating the login status
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    private void handleLoginFailure(HttpServletRequest req, HttpServletResponse resp, Boolean loginStatus)
-            throws ServletException, IOException {
-        String errorMessage;
-        if (loginStatus == null) {
-            errorMessage = "Our server is under maintenance. Please try again later!";
-        } else {
-            errorMessage = "User credential mismatch. Please try again!";
-        }
-        req.setAttribute("error", errorMessage);
+        // If user not found or password invalid, show error
+        req.setAttribute("error", "Invalid email or password. Please try again!");
         req.getRequestDispatcher("/WEB-INF/pages/loginpage.jsp").forward(req, resp);
     }
 }

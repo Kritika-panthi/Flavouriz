@@ -1,6 +1,7 @@
 package com.flavourizz.controller;
 
 import java.io.IOException;
+
 import com.flavourizz.model.UserModel;
 import com.flavourizz.service.RegisterService;
 import com.flavourizz.util.PasswordUtil;
@@ -20,61 +21,56 @@ import jakarta.servlet.http.HttpServletResponse;
 public class RegistrationController extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private RegisterService registerService;
-    
+
     @Override
     public void init() {
         registerService = new RegisterService();
     }
-    
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // Debug statement
-        System.out.println("RegistrationController doGet method called");
-        
-        // Forward to the registration page - using the correct path
         req.getRequestDispatcher("/WEB-INF/pages/registrationpage.jsp").forward(req, resp);
     }
-    
+
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        System.out.println("RegistrationController doPost method called");
-        
         String username = req.getParameter("username");
-        String email = req.getParameter("email");
         String password = req.getParameter("password");
-        String role = req.getParameter("role");
         String retypePassword = req.getParameter("retypePassword");
 
-        System.out.println("Username: " + username);
-        System.out.println("Email: " + email);
-        System.out.println("Password: " + (password != null ? "provided" : "null"));
-        System.out.println("Role: " + role);
-        System.out.println("Retype Password: " + (retypePassword != null ? "provided" : "null"));
+        // Normalize email
+        String email = req.getParameter("email");
+        if (email != null) {
+            email = email.trim().toLowerCase();  // ✅ reassign existing variable
+        }
+        // Role is hardcoded as 1 (user)
+        int roleId = 1;
 
         if (ValidationUtil.isNullOrEmpty(username) || ValidationUtil.isNullOrEmpty(email) ||
-                ValidationUtil.isNullOrEmpty(password) || ValidationUtil.isNullOrEmpty(role) ||
+                ValidationUtil.isNullOrEmpty(password) ||
                 !ValidationUtil.doPasswordsMatch(password, retypePassword)) {
 
-            req.setAttribute("errorMessage", "Please fill all the fields correctly.");
+            req.setAttribute("errorMessage", "Please fill all fields correctly.");
             req.setAttribute("username", username);
             req.setAttribute("email", email);
-            req.setAttribute("role", role);
-
+            // No role attribute needed anymore
             req.getRequestDispatcher("/WEB-INF/pages/registrationpage.jsp").forward(req, resp);
             return;
         }
 
-        String encryptedPassword = PasswordUtil.encrypt(username, password);
+        // Encrypt password
+        String encryptedPassword = PasswordUtil.hashPassword(password);
 
-        boolean success = registerService.registerUser(new UserModel(0, username, email, encryptedPassword, role));
+        UserModel user = new UserModel(0, username, email, encryptedPassword, roleId);
+
+        boolean success = registerService.registerUser(user);
 
         if (success) {
             req.getRequestDispatcher("/WEB-INF/pages/loginpage.jsp").forward(req, resp);
         } else {
+            req.setAttribute("errorMessage", "An account with this email already exists.");
             req.setAttribute("username", username);
             req.setAttribute("email", email);
-            req.setAttribute("role", role);
-            req.setAttribute("errorMessage", "Registration failed. Please try again.");
             req.getRequestDispatcher("/WEB-INF/pages/registrationpage.jsp").forward(req, resp);
         }
     }
