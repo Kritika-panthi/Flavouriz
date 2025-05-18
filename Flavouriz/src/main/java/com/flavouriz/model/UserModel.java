@@ -1,55 +1,68 @@
-package com.flavouriz.model;
+package com.flavourizz.model;
 
 public class UserModel {
-	private String Username; 
-	private  String Email;
-	private String Password;
-	private String Role;
-	private String name;
-	private String profilePic;
-	public UserModel(String username, String email, String password, String role) {
-		super();
-		this.Username = username;
-		this.Email = email;
-		this.Password = password;
-		this.Role = role;
-		this.name = name;
-		this.profilePic = profilePic;
-	}
-	public UserModel(String name) {
-		this.Username = Username;
-	}
-	public String getUsername() {
-		return Username;
-	}
-	public void setUsername(String username) {
-		Username = username;
-	}
-	public String getEmail() {
-		return Email;
-	}
-	public void setEmail(String email) {
-		Email = email;
-	}
-	public String getPassword() {
-		return Password;
-	}
-	public void setPassword(String password) {
-		Password = password;
-	}
-	public String getRole() {
-		return Role;
-	}
-	public void setRole(String role) {
-		Role = role;
-	}
-	public String getName() {
-		return name;
-	}
-	public void setName(String name) {
-		this.name = name;
-	}
-	public String getProfilePic(String profilePic) {
-		this.profilePic = profilePic;
-	}
+    private int userId;        // Maps to User_ID
+    private String username;   // Maps to Username
+    private String email;      // Maps to Email
+    private String password;   // Maps to Password
+    private int roleId;        // Maps to Role_ID
+
+    // Constructors
+    public UserModel() {}
+
+    public UserModel(int userId, String username, String email, String password, int roleId) {
+        this.userId = userId;
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.roleId = roleId;
+    }
+
+    public UserModel(String username, String email, String password, int roleId) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.roleId = roleId;
+    }
+
+    // Getters and Setters
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email.trim().toLowerCase(); // Normalize email
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public int getRoleId() {
+        return roleId;
+    }
+
+    public void setRoleId(int roleId) {
+        this.roleId = roleId;
+    }
 }
